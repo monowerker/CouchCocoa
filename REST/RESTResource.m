@@ -86,13 +86,18 @@
 }
 
 
-- (NSURL*) URL {
-    if (_url)
-        return _url;
-    else if (_relativePath)
-        return [_parent.URL URLByAppendingPathComponent: _relativePath];
-    else
-        return nil;
+- (NSURL *)URL {
+	if (_url) {
+		return _url;
+	} else if (_relativePath) {
+        // add a forward slash if it's missing
+		NSURL *parentURL = [_parent.URL URLByAppendingPathComponent:@""];
+		
+        return [NSURL URLWithString:URLEncodeRelativePath(_relativePath)
+		              relativeToURL:parentURL];
+	} else {
+		return nil;
+	}
 }
 
 
@@ -378,5 +383,18 @@ static NSDictionary* addJSONType(NSDictionary* parameters) {
     return _protectionSpace ? _protectionSpace : [_parent protectionSpaceForOperation: op];
 }
 
+#pragma mark - Utils
+
+NSString *URLEncodeRelativePath(NSString *path);
+NSString *URLEncodeRelativePath(NSString *path) {
+	CFStringRef escapedPath = CFURLCreateStringByAddingPercentEscapes(NULL,
+	                                                                  (CFStringRef)path,
+	                                                                  NULL,
+                                                                      (CFStringRef)@"/",
+	                                                                  kCFStringEncodingUTF8);
+    
+
+	return [(NSString *)escapedPath autorelease];
+}
 
 @end
